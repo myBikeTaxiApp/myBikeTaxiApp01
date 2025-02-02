@@ -2,18 +2,22 @@ const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { check, validationResult } = require("express-validator");
-const User = require("../models/User"); // Assuming the User model is already created
-const authMiddleware = require("../middleware/authMiddleware"); // Importing authMiddleware to protect routes
+const User = require("../models/User"); // Import User model
+const authMiddleware = require("../middleware/authMiddleware"); // Import authMiddleware for protected routes
 
 const router = express.Router();
 
-// User Registration Route
+// User Registration Route (POST /api/auth/register)
 router.post(
   "/register",
   [
     check("name", "Name is required").not().isEmpty(),
     check("email", "Please include a valid email").isEmail(),
-    check("password", "Password must be 6 or more characters").isLength({ min: 6 }),
+    check("password", "Password must be at least 6 characters, include one uppercase, one lowercase, and one number")
+      .isLength({ min: 6 })
+      .matches(/[A-Z]/) // At least one uppercase letter
+      .matches(/[a-z]/) // At least one lowercase letter
+      .matches(/[0-9]/), // At least one number
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -29,27 +33,27 @@ router.post(
         return res.status(400).json({ msg: "User already exists" });
       }
 
-      user = new User({ name, email, password });
-
-      // Hash the password
+      // Hash password
       const salt = await bcrypt.genSalt(10);
-      user.password = await bcrypt.hash(password, salt);
+      const hashedPassword = await bcrypt.hash(password, salt);
 
+      // Create new user
+      user = new User({ name, email, password: hashedPassword });
       await user.save();
 
-      // Create JWT Token
+      // Generate JWT Token
       const payload = { user: { id: user.id } };
-      const token = jwt.sign(payload, "your_jwt_secret", { expiresIn: "1h" });
+      const token = jwt.sign(payload, process.env.JWT_SECRET || "XXXXXX", { expiresIn: "1h" });
 
-      res.json({ token });
+      res.status(201).json({ token, msg: "User registered successfully" });
     } catch (err) {
-      console.error(err.message);
-      res.status(500).send("Server Error");
+      console.error("Error in Register Route:", err.message);
+      res.status(500).json({ msg: "Server Error" });
     }
   }
 );
 
-// User Login Route
+// User Login Route (POST /api/auth/login)
 router.post(
   "/login",
   [
@@ -76,31 +80,31 @@ router.post(
         return res.status(400).json({ msg: "Invalid credentials" });
       }
 
-      // Create JWT Token
+      // Generate JWT Token
       const payload = { user: { id: user.id } };
-      const token = jwt.sign(payload, "your_jwt_secret", { expiresIn: "1h" });
+      const token = jwt.sign(payload, process.env.JWT_SECRET || "Gurrnaat3792$", { expiresIn: "1h" });
 
-      res.json({ token });
+      res.json({ token, msg: "Login successful" });
     } catch (err) {
-      console.error(err.message);
-      res.status(500).send("Server Error");
+      console.error("Error in Login Route:", err.message);
+      res.status(500).json({ msg: "Server Error" });
     }
   }
 );
 
-// User Profile Route (GET /profile)
+// User Profile Route (GET /api/auth/profile)
 router.get("/profile", authMiddleware, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select("-password"); // Exclude the password field
+    const user = await User.findById(req.user.id).select("-password");
 
     if (!user) {
       return res.status(404).json({ msg: "User not found" });
     }
 
-    res.json(user); // Send the user's profile information
+    res.json(user);
   } catch (err) {
-    console.error(err.message);
-    res.status(500).send("Server Error");
+    console.error("Error in Profile Route:", err.message);
+    res.status(500).json({ msg: "Server Error" });
   }
 });
 
