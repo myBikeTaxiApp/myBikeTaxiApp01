@@ -3,17 +3,20 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { check, validationResult } = require("express-validator");
 const User = require("../models/User"); // Import User model
-const authMiddleware = require("../middleware/authMiddleware"); // Import authMiddleware for protected routes
+const { verifyToken } = require("../middleware/authMiddleware"); // ✅ Corrected import
 
 const router = express.Router();
 
-// User Registration Route (POST /api/auth/register)
+// 🟢 User Registration Route (POST /api/auth/register)
 router.post(
   "/register",
   [
     check("name", "Name is required").not().isEmpty(),
     check("email", "Please include a valid email").isEmail(),
-    check("password", "Password must be at least 6 characters, include one uppercase, one lowercase, and one number")
+    check(
+      "password",
+      "Password must be at least 6 characters, include one uppercase, one lowercase, and one number"
+    )
       .isLength({ min: 6 })
       .matches(/[A-Z]/) // At least one uppercase letter
       .matches(/[a-z]/) // At least one lowercase letter
@@ -43,7 +46,7 @@ router.post(
 
       // Generate JWT Token
       const payload = { user: { id: user.id } };
-      const token = jwt.sign(payload, process.env.JWT_SECRET || "XXXXXX", { expiresIn: "1h" });
+      const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "1h" });
 
       res.status(201).json({ token, msg: "User registered successfully" });
     } catch (err) {
@@ -53,7 +56,7 @@ router.post(
   }
 );
 
-// User Login Route (POST /api/auth/login)
+// 🟢 User Login Route (POST /api/auth/login)
 router.post(
   "/login",
   [
@@ -82,7 +85,7 @@ router.post(
 
       // Generate JWT Token
       const payload = { user: { id: user.id } };
-      const token = jwt.sign(payload, process.env.JWT_SECRET || "Gurrnaat3792$", { expiresIn: "1h" });
+      const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "1h" });
 
       res.json({ token, msg: "Login successful" });
     } catch (err) {
@@ -92,8 +95,8 @@ router.post(
   }
 );
 
-// User Profile Route (GET /api/auth/profile)
-router.get("/profile", authMiddleware, async (req, res) => {
+// 🟢 User Profile Route (GET /api/auth/profile)
+router.get("/profile", verifyToken, async (req, res) => { // ✅ Corrected middleware usage
   try {
     const user = await User.findById(req.user.id).select("-password");
 

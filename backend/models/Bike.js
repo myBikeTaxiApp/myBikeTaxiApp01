@@ -1,21 +1,24 @@
-// backend/models/Bike.js
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const BikeSchema = new mongoose.Schema({
-  type: {
+// Define the bike schema
+const bikeSchema = new mongoose.Schema({
+  model: {
     type: String,
-    required: true,
+    required: true, // Ensure a model name is provided
   },
-  pricePerRide: {
+  status: {
+    type: String,
+    enum: ["available", "booked", "in-use"],
+    default: "available", // Bikes default to 'available' status
+  },
+  pricePerHour: {
     type: Number,
-    required: true,
-  },
-  available: {
-    type: Boolean,
-    default: true,
+    required: true, // Ensure a price per hour is provided
   },
 });
 
-const Bike = mongoose.model('Bike', BikeSchema);
+// Create a model from the schema
+const Bike = mongoose.model("Bike", bikeSchema);
 
+// Export the Bike model to be used elsewhere in your application
 module.exports = Bike;

@@ -1,4 +1,4 @@
-// Load environment variables
+// Load environment variables 
 require("dotenv").config();
 
 const express = require("express");
@@ -17,21 +17,21 @@ connectDB();
 // Routes
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/rides", require("./routes/rideRoutes"));
+app.use("/api/bikes", require("./routes/bikeRoutes")); // Register bike routes here
 
 // Root Route (For Testing)
 app.get("/", (req, res) => {
     res.send("🚀 Welcome to My Bike Taxi App Backend!");
 });
 
-// Handle Undefined Routes
+// Handle Undefined Routes (404)
 app.use((req, res) => {
     res.status(404).json({ msg: "Route Not Found" });
 });
 
-// Error Handling Middleware
+// Error Handling Middleware (500)
 app.use((err, req, res, next) => {
     console.error("Server Error:", err.message); // Log the error
-    // Ensure the error response contains proper details
     res.status(500).json({ msg: "Internal Server Error", error: err.message });
 });
 
