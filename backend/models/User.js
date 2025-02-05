@@ -4,31 +4,43 @@ const UserSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: [true, "Please provide a name"],
+      trim: true,
+    },
+    mobileNumber: {
+      type: String,
+      required: [true, "Mobile number is required"],
+      unique: true, // `unique` already creates an index
+      match: [/^\d{10}$/, "Please provide a valid 10-digit mobile number"],
+      trim: true,
     },
     email: {
       type: String,
-      required: [true, "Please provide an email"],
-      unique: true,
-      lowercase: true, // Automatically convert email to lowercase
-      trim: true, // Removes any extra spaces around the email
+      unique: true, // `unique` already creates an index
+      lowercase: true,
+      trim: true,
+      sparse: true, // Allows null values (optional field)
       match: [
-        /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, // Regular expression for valid email
+        /^[\w-\\.]+@([\w-]+\.)+[\w-]{2,4}$/,
         "Please provide a valid email address",
       ],
     },
-    password: {
-      type: String,
-      required: [true, "Please provide a password"],
-      minlength: [6, "Password must be at least 6 characters long"], // Enforce password length
+    isVerified: {
+      type: Boolean,
+      default: false,
     },
     role: {
       type: String,
-      enum: ["user", "admin"], // You can add roles like 'admin', 'user', etc.
-      default: "user",
+      enum: ["passenger", "driver", "admin"],
+      default: "passenger",
+    },
+    profileCompleted: {
+      type: Boolean,
+      default: false,
     },
   },
-  { timestamps: true } // Automatically add createdAt and updatedAt fields
+  { timestamps: true } // Automatically adds `createdAt` and `updatedAt`
 );
+
+// ❌ Removed duplicate index definitions (They were unnecessary)
 
 module.exports = mongoose.model("User", UserSchema);
