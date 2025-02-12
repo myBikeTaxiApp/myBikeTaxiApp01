@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,78 +7,103 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
-  Keyboard,
-  TouchableWithoutFeedback,
-  Alert,
+  Image,
+  Animated,
 } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
 
 const HomeScreen = ({ navigation }) => {
-  const [selectedCountry, setSelectedCountry] = useState('+1');
+  const [selectedCountry, setSelectedCountry] = useState('+91');
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [isPhoneFocused, setIsPhoneFocused] = useState(false);
+  const [name, setName] = useState('');
+  const [flag, setFlag] = useState('🇮🇳');
+  const blinkAnim = useRef(new Animated.Value(1)).current;
 
-  const handleNext = () => {
-    const phoneRegex = /^[0-9]{10}$/;
-    if (!phoneRegex.test(phoneNumber)) {
-      Alert.alert('Invalid Phone Number', 'Please enter a valid 10-digit phone number.');
-      return;
-    }
-    navigation.navigate('Login'); // Navigate to the Login screen
-  };
+  useEffect(() => {
+    if (selectedCountry === '+91') setFlag('🇮🇳');
+    else if (selectedCountry === '+1') setFlag('🇺🇸');
+    else if (selectedCountry === '+38') setFlag('🇺🇦');
+  }, [selectedCountry]);
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(blinkAnim, {
+          toValue: 0.5,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+        Animated.timing(blinkAnim, {
+          toValue: 1,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, []);
 
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <KeyboardAvoidingView
-        style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <View style={styles.headerContainer}>
-          <Text style={styles.headerText}>Get started!</Text>
-          <Text style={styles.subHeaderText}>
-            Please enter your mobile number to verify your account
-          </Text>
-        </View>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <Animated.View style={[styles.halfCircle, { opacity: blinkAnim }]} />
+      <View style={styles.logoContainer}>
+        <Image source={{ uri: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgB6o6OL5Bl9QAGQJzbyFnnBX8ywkx2sznicst6vMXuo2sQrYRPeOpceVVk_jrWdOL5FbkXp-kpDsNwOM3XTvUhGPSY9ilxUAs3NR3yAuMldq-TmhpRrIBxBV69S7owDduJtk0qXuy-m5S0QXCAfecvDDp4Heg2mFfPVBkb_ajONwSgVpIbTQdEo9M248o/w540-h540/vgologoo...png' }} style={styles.logo} />
+      </View>
+      <View style={styles.headerContainer}>
+        <Text style={styles.headerText}>Get started!</Text>
+      </View>
+      
+      <View style={styles.sectionSpacing} />
+      <Text style={styles.inputLabel}>Please enter your Name</Text>
+      <TextInput
+        style={styles.nameInput}
+        placeholder="Enter your name"
+        value={name}
+        onChangeText={setName}
+      />
 
-        <View style={styles.inputContainer}>
-          <View style={styles.pickerContainer}>
-            <Picker
-              selectedValue={selectedCountry}
-              onValueChange={(itemValue) => setSelectedCountry(itemValue)}
-              style={styles.picker}
-              accessibilityLabel="Country Code Picker"
-            >
-              <Picker.Item label="🇺🇸 +1" value="+1" />
-              <Picker.Item label="🇮🇳 +91" value="+91" />
-              <Picker.Item label="🇺🇦 +38" value="+38" />
-            </Picker>
-          </View>
-          <TextInput
-            style={styles.phoneNumberInput}
-            placeholder="123-456-7890"
-            keyboardType="phone-pad"
-            value={phoneNumber}
-            onChangeText={setPhoneNumber}
-            maxLength={10}
-            accessibilityLabel="Phone Number Input"
-          />
-        </View>
+      <View style={styles.sectionSpacing} />
+      <Text style={styles.inputLabelSmall}>Please enter your Mobile Number</Text>
+      
+      <View style={styles.inputContainer}>
+        <Text style={styles.flagText}>{flag}</Text>
+        <Text style={styles.countryCodeText}>{selectedCountry}</Text>
+        <TextInput
+          key={isPhoneFocused ? 'focused' : 'unfocused'}  // Force re-render
+          style={styles.phoneNumberInput}
+          value={isPhoneFocused ? phoneNumber : ''}
+          placeholder="0000000000"
+          keyboardType="phone-pad"
+          onFocus={() => {
+            setIsPhoneFocused(true);
+            setPhoneNumber('');
+          }}
+          onBlur={() => {
+            setIsPhoneFocused(phoneNumber.length > 0);
+          }}
+          onChangeText={(value) => setPhoneNumber(value.replace(/\D/g, '').slice(0, 10))}
+          placeholderTextColor="#D1D1D1"
+        />
+      </View>
 
-        <TouchableOpacity 
-          style={styles.nextButton}
-          onPress={handleNext}
-          accessibilityLabel="Next Button"
-        >
-          <Text style={styles.nextButtonText}>Next →</Text>
-        </TouchableOpacity>
+      <View style={styles.sectionSpacing} />
+      <TouchableOpacity
+  style={styles.nextButton}
+  onPress={() => navigation.navigate('OtpScreen', { phoneNumber })} // Pass phoneNumber as a parameter
+>
+  <Text style={styles.nextButtonText}>Next →</Text>
+</TouchableOpacity>
 
-        <Text style={styles.termsText}>
-          By clicking "Next" you agree to the
-          <Text style={styles.linkText}> privacy policy </Text>
-          and
-          <Text style={styles.linkText}> terms of service</Text>
-        </Text>
-      </KeyboardAvoidingView>
-    </TouchableWithoutFeedback>
+
+      <Text style={styles.termsText}>
+        <Text style={{ fontSize: 8 }}>By clicking "Next" you agree to the</Text>
+        <Text style={styles.linkTextBlue}> Privacy Policy </Text>
+        <Text style={{ fontSize: 8 }}>and</Text>
+        <Text style={styles.linkTextBlue}> T&S</Text>
+      </Text>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -89,8 +114,30 @@ const styles = StyleSheet.create({
     padding: 20,
     justifyContent: 'center',
   },
+  halfCircle: {
+    position: 'absolute',
+    top: -150,
+    left: -150,
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    backgroundColor: '#FFA500',
+  },
+  logoContainer: {
+    alignItems: 'center',
+    marginTop: 80,
+  },
+  logo: {
+    width: 150,
+    height: 150,
+    resizeMode: 'contain',
+  },
   headerContainer: {
     marginBottom: 30,
+    alignItems: 'center',
+  },
+  sectionSpacing: {
+    height: 20,
   },
   headerText: {
     fontSize: 24,
@@ -98,52 +145,68 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 10,
   },
-  subHeaderText: {
+  nameInput: {
+    height: 45,
+    borderWidth: 1,
+    borderColor: '#CCCCCC',
+    borderRadius: 6,
+    marginBottom: 20,
+    paddingHorizontal: 10,
     fontSize: 16,
-    textAlign: 'center',
-    color: '#555555',
+    width: '90%',
+    alignSelf: 'center',
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#CCCCCC',
-    borderRadius: 8,
+    borderRadius: 6,
     marginBottom: 20,
-    paddingLeft: 10,
+    width: '90%',
+    alignSelf: 'center',
+    paddingHorizontal: 10,
   },
-  pickerContainer: {
-    width: 100,
+  flagText: {
+    fontSize: 20,
+    marginRight: 5,
   },
-  picker: {
-    height: 50,
-    width: '100%',
+  countryCodeText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginRight: 5,
   },
   phoneNumberInput: {
     flex: 1,
-    height: 50,
-    paddingHorizontal: 10,
     fontSize: 16,
+    height: 45,
+    paddingHorizontal: 5,
+    color: '#000',
   },
   nextButton: {
-    backgroundColor: '#007BFF',
-    borderRadius: 8,
+    backgroundColor: '#FFA500',
+    borderRadius: 6,
     paddingVertical: 15,
     alignItems: 'center',
+    width: '95%',
+    alignSelf: 'center',
   },
   nextButtonText: {
-    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
+    color: '#000000',
   },
   termsText: {
+    fontSize: 10,
     textAlign: 'center',
-    fontSize: 12,
-    color: '#555555',
-    marginTop: 20,
+    marginTop: 10,
+    alignSelf: 'center',
+    width: '90%',
   },
-  linkText: {
+  linkTextBlue: {
     color: '#007BFF',
+    fontWeight: 'bold',
+    fontSize: 8,
   },
 });
 

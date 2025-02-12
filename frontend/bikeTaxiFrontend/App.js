@@ -4,6 +4,11 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import HomeScreen from './screens/HomeScreen';
 import LoginScreen from './screens/LoginScreen';
+import OtpScreen from './screens/OtpScreen'; 
+import EnableLocationScreen from './screens/EnableLocationScreen';
+import HomeScreenWithMap from './screens/HomeScreenWithMap';
+
+
 
 // Create the stack navigator
 const Stack = createStackNavigator();
@@ -26,6 +31,17 @@ function App() {
 
         {/* Login Screen */}
         <Stack.Screen name="Login" component={LoginScreen} />
+
+        {/* OTP Screen */}
+        <Stack.Screen name="OtpScreen" component={OtpScreen} />
+
+        {/* Enable Location Screen */}
+        <Stack.Screen name="EnableLocation" component={EnableLocationScreen} />
+
+         {/* Home Screen With Map */}
+         <Stack.Screen name="HomeScreenWithMap" component={HomeScreenWithMap} />
+
+
       </Stack.Navigator>
     </NavigationContainer>
   );
